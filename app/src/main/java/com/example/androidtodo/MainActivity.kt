@@ -19,20 +19,24 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.androidtodo.ui.theme.AndroidTodoTheme
 import com.example.androidtodo.ui.theme.Typography
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 
-data class Todo(val text: String, val done: Boolean)
-
-var todos = arrayOf(
-    Todo("First todo", false),
-    Todo("Second todo", true),
-)
+data class Todo(val text: String, var done: Boolean)
 
 @Composable
 fun RemainderText(remaining: Int, total: Int) {
@@ -40,7 +44,8 @@ fun RemainderText(remaining: Int, total: Int) {
 }
 
 @Composable
-fun TodoItem(todo: Todo) {
+fun TodoItem(todos: SnapshotStateList<Todo>, index: Int) {
+    val todo = todos[index]
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -50,7 +55,9 @@ fun TodoItem(todo: Todo) {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Checkbox(checked = todo.done, onCheckedChange = {})
+            Checkbox(checked = todo.done, onCheckedChange = { isChecked ->
+                todos[index] = todo.copy(done = isChecked)
+            })
             Text(
                 todo.text,
                 overflow = TextOverflow.Ellipsis,
@@ -59,7 +66,7 @@ fun TodoItem(todo: Todo) {
             )
         }
         Button(
-            {}, colors = ButtonDefaults.buttonColors(
+            { todos.removeAt(index) }, colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Red,
                 contentColor = Color.White
             )
@@ -70,35 +77,44 @@ fun TodoItem(todo: Todo) {
 }
 
 @Composable
-fun TodoList(todos: Array<Todo>) {
+fun TodoList(todos: SnapshotStateList<Todo>) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        todos.map { TodoItem(it) }
+        todos.mapIndexed { index, _ -> TodoItem(todos, index) }
     }
 }
 
 @Composable
 fun App() {
+    val todos = remember { mutableStateListOf<Todo>() }
+    var todoText by remember { mutableStateOf("") }
+    val total = todos.size
+    val remaining = todos.count { !it.done }
+
     Text(text = "Tasks", style = Typography.titleLarge)
-    RemainderText(0, 0)
+    RemainderText(remaining, total)
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(bottom = 32.dp)
     ) {
         OutlinedTextField(
-            value = "",
-            {},
+            value = todoText,
+            { newValue -> todoText = newValue },
             placeholder = { Text("Add a new task...") },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary
             )
         )
         Button(
-            onClick = {},
+            onClick = {
+                todos.add(Todo(todoText, false))
+                todoText = ""
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
-            Text("+")
+            Text("+", style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold))
         }
     }
     TodoList(todos)
