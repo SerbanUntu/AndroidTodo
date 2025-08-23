@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import java.util.Properties
 
 val properties = Properties()
@@ -21,7 +20,7 @@ android {
     defaultConfig {
 
         val convexUrl: String =
-            properties.getProperty("CONVEX_URL") ?: throw Error("Convex url is not set");
+            properties.getProperty("CONVEX_URL") ?: throw Error("Convex url is not set")
         buildConfigField("String", "CONVEX_URL", "\"$convexUrl\"")
 
         applicationId = "com.example.androidtodo"
