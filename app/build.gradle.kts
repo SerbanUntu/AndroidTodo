@@ -1,7 +1,17 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import java.util.Properties
+
+val properties = Properties()
+val localPropertiesFile = project.rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    properties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 android {
@@ -9,6 +19,11 @@ android {
     compileSdk = 36
 
     defaultConfig {
+
+        val convexUrl: String =
+            properties.getProperty("CONVEX_URL") ?: throw Error("Convex url is not set");
+        buildConfigField("String", "CONVEX_URL", "\"$convexUrl\"")
+
         applicationId = "com.example.androidtodo"
         minSdk = 28
         targetSdk = 36
@@ -33,6 +48,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -53,4 +69,8 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("dev.convex:android-convexmobile:0.4.1@aar") {
+        isTransitive = true
+    }
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
